@@ -54,7 +54,7 @@ class avl_tree {
         avl_node* left_;
         avl_node* right_;
         int height_;
-        size_t
+        size_t smaller_elems_count_;
         avl_node(KeyType key, avl_node* parent, avl_node* left = nullptr
                 ,avl_node* right = nullptr, int height = 1):
         key_(key),
