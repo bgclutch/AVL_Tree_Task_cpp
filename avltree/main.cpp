@@ -1,5 +1,5 @@
-#include <iostream>
 #include "avl_tree.hpp"
+#include <iostream>
 
 int main() {
     avl::avl_tree<int> tree;
