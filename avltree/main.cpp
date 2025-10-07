@@ -1,12 +1,9 @@
 #include "avl_tree.hpp"
 #include <iostream>
-#include <fstream>
 
 int main() {
     avl::avl_tree<int> tree;
     char request;
-
-    std::ofstream output("res.out", std::ios::out);
 
     while (std::cin >> request) {
         if (request == avl::key_request) {
@@ -23,7 +20,7 @@ int main() {
                 std::cerr << "WRONG GIVEN BOUNDS\n";
                 return EXIT_FAILURE;
             }
-            output << tree.range_queries(first, second) << " ";
+            std::cout << tree.range_queries(first, second) << " ";
         }
         else {
             std::cerr << "WRONG REQUEST -> " << request << "\n";

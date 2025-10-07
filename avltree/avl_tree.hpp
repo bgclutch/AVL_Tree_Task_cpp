@@ -60,10 +60,77 @@ class avl_tree {
     using find_res  = std::pair<avl_node*, find_flag>;
 
  public:
-    ~avl_tree() {
+    avl_tree() {} // constructor
+    ~avl_tree() { // destructor
         deleteTree();
     }
 
+    avl_tree(const avl_tree<KeyType>& other) { // copy constructor
+        root = deep_copy(other);
+    }
+
+    avl_tree(avl_tree<KeyType>&& other) noexcept : root{other.root} { // move constructor
+        other.root = nullptr;
+    }
+
+    avl_tree& operator=(const avl_tree<KeyType>& other) { // copy assignment
+        if (this == &other)
+            return *this;
+
+        deleteTree();
+        root = deep_copy(other);
+        return *this;
+    }
+
+    avl_tree& operator=(avl_tree<KeyType>&& other) noexcept { // move assignment
+        if (this == &other)
+            return *this;
+
+        deleteTree();
+        root = other.root;
+        other.root = nullptr;
+        return *this;
+    }
+
+ private:
+    avl_node* deep_copy(const avl_tree& other) {
+        if (!other.root)
+            return nullptr;
+
+        std::stack<std::pair<const avl_node*, avl_node*>> stack;
+        avl_node* node = other.root;
+
+        avl_node* newRoot = new avl_node(node->key_, node->parent_, node->left_, node->right_
+                                       , node->height_, node->subtree_size_);
+
+        stack.push({node, newRoot});
+
+        while (!stack.empty()) {
+            auto [old_node, new_node] = stack.top();
+            stack.pop();
+
+            if (old_node->left_) {
+                new_node->left_ = new avl_node(old_node->left_->key_, new_node, old_node->left_->left_
+                                             , old_node->left_->right_, old_node->left_->height_
+                                             , old_node->left_->subtree_size_);
+
+                stack.push({old_node->left_, new_node->left_});
+            }
+
+            if (old_node->right_) {
+                new_node->right_ = new avl_node(old_node->right_->key_, new_node, old_node->right_->left_
+                                              , old_node->right_->right_, old_node->right_->height_
+                                              , old_node->right_->subtree_size_);
+
+                stack.push({old_node->right_, new_node->right_});
+            }
+        }
+
+        return newRoot;
+    }
+
+
+ public:
     void insert(const KeyType& key_to_insert) {
         if (!root) {
             root = new avl_node(key_to_insert, nullptr);
@@ -85,7 +152,7 @@ class avl_tree {
         updateHeights(new_node);
     }
 
-    find_res find (const KeyType& key_to_find) const {
+    find_res find(const KeyType& key_to_find) const {
         avl_node* current = root;
         avl_node* parent = nullptr;
         find_flag where_found = find_flag::exists;
@@ -245,7 +312,7 @@ class avl_tree {
         }
     }
 
-    size_t getSubtreeSize(avl_node* node) const{
+    size_t getSubtreeSize(const avl_node* node) const{
         return node ? node->subtree_size_ : 0;
     }
 
@@ -309,7 +376,7 @@ class avl_tree {
         }
     }
 
-    size_t distance(avl_node* lower, avl_node* upper) const {
+    size_t distance(const avl_node* lower, const avl_node* upper) const {
         if (!root)
             return 0;
         if (!lower)
@@ -348,33 +415,6 @@ class avl_tree {
 
         return distance(lower, upper);
     }
-
-    #if 1
-    void printTree() const{
-        if (!root)
-            return;
-
-        std::stack<avl_node*> stack;
-        avl_node* node = root;
-
-        while (!stack.empty() || node) {
-            while (node) {
-                stack.push(node);
-                node = node->left_;
-            }
-
-            node = stack.top();
-            stack.pop();
-
-            if (node == root)
-                std::cout << "ROOT->";
-
-            std::cout << node->key_ << "(" << node->subtree_size_ << ") ";
-            node = node->right_;
-        }
-        std::cout << std::endl;
-    }
-    #endif
 };
 
 } // namespace avl
