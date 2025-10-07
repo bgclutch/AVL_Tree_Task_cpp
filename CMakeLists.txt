@@ -5,9 +5,10 @@ project(avl)
 add_subdirectory(avltree)
 add_subdirectory(tests)
 
+option(ENABLE_ASAN OFF)
+
 foreach(target avltree tests)
     target_compile_features(${target} PUBLIC cxx_std_23)
-    option(ENABLE_ASAN OFF)
 endforeach()
 
 target_compile_options(avltree PRIVATE

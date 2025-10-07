@@ -11,5 +11,7 @@ int main() {
 
     tree.printTree();
 
+    std::cout << tree.range_queries(3, 9) << std::endl;
+
     return EXIT_SUCCESS;
 }
