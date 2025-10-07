@@ -327,15 +327,11 @@ class avl_tree {
         avl_node* current = root;
 
         while (current) {
-            if (node->key_ < current->key_) {
+            if (node->key_ <= current->key_) {
                 current = current->left_;
             }
             else {
                 result += 1 + getSubtreeSize(current->left_);
-                if (node->key_ == current->key_) {
-                    --result;
-                    break;
-                }
                 current = current->right_;
             }
         }

@@ -3,11 +3,12 @@ cmake_minimum_required(VERSION 3.30)
 project(avl)
 
 add_subdirectory(avltree)
+add_subdirectory(stdset)
 add_subdirectory(tests)
 
 option(ENABLE_ASAN OFF)
 
-foreach(target avltree tests)
+foreach(target avltree stdset tests)
     target_compile_features(${target} PUBLIC cxx_std_23)
 endforeach()
 
