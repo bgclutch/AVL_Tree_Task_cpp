@@ -5,16 +5,13 @@
 #include <algorithm>
 #include <cassert>
 
-
 namespace avl {
 
 constexpr int MIN_BALANCE = -1;
 constexpr int MAX_BALANCE =  1;
 
-enum class Queries {
-    k,
-    q
-};
+constexpr char key_request   = 'k';
+constexpr char query_request = 'q';
 
 enum class FindFlags {
     left,
@@ -313,7 +310,13 @@ class avl_tree {
     }
 
     size_t distance(avl_node* lower, avl_node* upper) const {
-        if (!lower || !upper || lower->key_ > upper->key_)
+        if (!root)
+            return 0;
+        if (!lower)
+            return 0;
+        if (!upper)
+            return getSubtreeSize(root) - getSmallerKeysCount(lower);
+        if (lower->key_ > upper->key_)
             return 0;
         return getSmallerKeysCount(upper) - getSmallerKeysCount(lower);
     }
@@ -329,12 +332,13 @@ class avl_tree {
             }
             else {
                 result += 1 + getSubtreeSize(current->left_);
-                if (node->key_ == current->key_)
+                if (node->key_ == current->key_) {
+                    --result;
                     break;
+                }
                 current = current->right_;
             }
         }
-
         return result;
     }
 
@@ -343,8 +347,8 @@ class avl_tree {
         if (first > second)
             return 0;
 
-        avl_node* lower = upper_bound(first);
-        avl_node* upper = lower_bound(second);
+        avl_node* lower = lower_bound(first);
+        avl_node* upper = upper_bound(second);
 
         return distance(lower, upper);
     }
