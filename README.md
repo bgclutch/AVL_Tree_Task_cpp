@@ -12,7 +12,7 @@ Clone this repository, then reach the project directory:
 ```sh
 git clone https://github.com/bgclutch/AVL_Tree_Task_cpp.git
 cd AVL_Tree_Task_cpp
-
+```
 
 ## Building:
 1. Build the project:
