@@ -60,3 +60,11 @@ cd build
 ```sh
 ./tests/tests
 ```
+
+## Benchmark results
+Benchmark for 10 tests with 1 million requests in each
+
+| Data structure | Average execution time, sec |
+|:-----------:|:------------------:|
+| **AVL Tree** | **0.655275**   |
+| **std::set** | **473.449269** |
