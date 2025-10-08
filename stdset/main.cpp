@@ -37,7 +37,7 @@ int main() {
                 std::cerr << "WRONG GIVEN BOUNDS\n";
                 return EXIT_FAILURE;
             }
-            std::cout << range_queries(tree, first, second) << " ";
+           std::cout << range_queries(tree, first, second) << " ";
         }
         else {
             std::cerr << "WRONG REQUEST -> " << request << "\n";

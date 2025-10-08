@@ -349,12 +349,15 @@ class avl_tree {
         }
 
         if (where_found == find_flag::exists) {
-            if (node->right_) {
+            if (node && node->right_) {
                 node = node->right_;
-                while (node->left_)
+                while (node && node->left_)
                     node = node->left_;
                 return node;
             }
+
+            if (!node)
+                return nullptr;
 
             avl_node* parent = node->parent_;
             avl_node* curNode = node;
