@@ -16,7 +16,7 @@ size_t range_queries(const SetType& set, const KeyType& first, const KeyType& se
         auto upper = set.upper_bound(second);
 
         return std::distance(lower, upper);
-    }
+}
 
 int main() {
     std::set<int> tree;
