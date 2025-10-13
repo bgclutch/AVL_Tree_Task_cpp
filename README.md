@@ -60,9 +60,24 @@ cd build
 ```sh
 ./tests/tests
 ```
+## Benchmark run
+1. To build the project in benchmark mode:
+```sh
+cmake -DENABLE_BECHMARK=ON -B build
+cmake --build build
+```
+2.1 Run benchmark with default data:
+```sh
+./build/benchmark/benchmark
+```
+2.2 Or use your data: 
+```sh
+./build/benchmark/benchmark "USER'S FILE"
+```
 
 ## Benchmark results
-Benchmark for 10 tests with 1 million requests in each
+Benchmark for 10 tests with 1 million requests in each,
+using -O2 optimisation
 
 | Data structure | Average execution time, sec |
 |:-----------:|:------------------:|

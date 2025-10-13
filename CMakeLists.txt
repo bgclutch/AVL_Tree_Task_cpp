@@ -5,11 +5,15 @@ project(avl)
 add_subdirectory(avltree)
 add_subdirectory(stdset)
 add_subdirectory(tests)
-add_subdirectory(benchmark)
 
 option(ENABLE_ASAN OFF)
+option(ENABLE_BENCHMARK OFF)
 
-foreach(target avltree stdset tests benchmark)
+if(ENABLE_BENCHMARK)
+    add_subdirectory(benchmark)
+endif()
+
+foreach(target avltree stdset tests)
     target_compile_features(${target} PUBLIC cxx_std_23)
 endforeach()
 
