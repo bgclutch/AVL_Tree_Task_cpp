@@ -7,17 +7,23 @@
 
 namespace avl {
 
-constexpr int MIN_BALANCE = -1;
-constexpr int MAX_BALANCE =  1;
+static constexpr int MIN_BALANCE = -1;
+static constexpr int MAX_BALANCE =  1;
 
-constexpr char key_request   = 'k';
-constexpr char query_request = 'q';
+static constexpr char key_request   = 'k';
+static constexpr char query_request = 'q';
 
 enum class FindFlags {
     left,
     right,
     exists
 };
+
+/*
+Iterator class/struct
+const ref semantics (const Node&) access w/o changing
+incr/decr, std::next && std::prev already done for classes with ++/--
+*/
 
 template <typename KeyType>
 class avl_tree {
@@ -54,14 +60,22 @@ class avl_tree {
         }
     };
 
+    #if 0
+    struct Iterator {
+        const avl_node& Node;
+        avl_node& operator++() const {}
+        avl_node& operator--() const {}
+    };
+    #endif
+
     avl_node* root = nullptr;
 
     using find_flag = avl::FindFlags;
     using find_res  = std::pair<avl_node*, find_flag>;
 
  public:
-    avl_tree() {} // constructor
-    ~avl_tree() { // destructor
+    avl_tree() = default; // constructor
+    ~avl_tree() {         // destructor
         deleteTree();
     }
 
@@ -69,16 +83,14 @@ class avl_tree {
         root = deep_copy(other);
     }
 
-    avl_tree(avl_tree<KeyType>&& other) noexcept : root{other.root} { // move constructor
-        other.root = nullptr;
-    }
+    avl_tree(avl_tree<KeyType>&& other) noexcept : root{std::exchange(other.root, nullptr)} {} // move constructor
 
     avl_tree& operator=(const avl_tree<KeyType>& other) { // copy assignment
         if (this == &other)
             return *this;
 
-        deleteTree();
-        root = deep_copy(other);
+        auto tmp = deep_copy(other);
+        std::swap(root, tmp);
         return *this;
     }
 
@@ -86,14 +98,12 @@ class avl_tree {
         if (this == &other)
             return *this;
 
-        deleteTree();
-        root = other.root;
-        other.root = nullptr;
+        std::swap(root, other.root);
         return *this;
     }
 
  private:
-    avl_node* deep_copy(const avl_tree& other) {
+    static avl_node* deep_copy(const avl_tree& other) {
         if (!other.root)
             return nullptr;
 
@@ -128,7 +138,6 @@ class avl_tree {
 
         return newRoot;
     }
-
 
  public:
     void insert(const KeyType& key_to_insert) {
@@ -321,7 +330,7 @@ class avl_tree {
     }
 
  public:
-    avl_node* lower_bound(const KeyType& key) const {
+    avl_node* lower_bound(const KeyType& key) const { // FIXME return iterator
         auto [node, where_found] = find(key);
 
         if (where_found == find_flag::exists)
@@ -341,7 +350,7 @@ class avl_tree {
         }
     }
 
-    avl_node* upper_bound(const KeyType& key) const {
+    avl_node* upper_bound(const KeyType& key) const { // FIXME return iterator
         auto [node, where_found] = find(key);
 
         if (where_found == find_flag::left) {
@@ -379,7 +388,7 @@ class avl_tree {
         }
     }
 
-    size_t distance(const avl_node* lower, const avl_node* upper) const {
+    size_t distance(const avl_node* lower, const avl_node* upper) const { // iterators
         if (!root)
             return 0;
         if (!lower)
@@ -409,7 +418,7 @@ class avl_tree {
     }
 
  public:
-    size_t range_queries(const KeyType& first, const KeyType& second) const{
+    size_t range_queries(const KeyType& first, const KeyType& second) const {
         if (first > second)
             return 0;
 
