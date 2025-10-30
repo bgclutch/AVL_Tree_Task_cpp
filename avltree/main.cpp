@@ -1,5 +1,11 @@
 #include "avl_tree.hpp"
 #include <iostream>
+#include <limits>
+
+void clearInput() {
+    std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+}
 
 int main() {
     avl::avl_tree<int> tree;
@@ -8,23 +14,24 @@ int main() {
     while (std::cin >> request) {
         if (request == avl::key_request) {
             int newKey;
-            if (!(std::cin >> newKey)) {
-                std::cerr << "WRONG GIVEN KEY\n";
-                return EXIT_FAILURE;
+            while (!(std::cin >> newKey)) {
+                std::cerr << "WRONG GIVEN KEY -> " << newKey << "\n";
+                clearInput();
+
             }
             tree.insert(newKey);
         }
         else if (request == avl::query_request) {
             int first, second;
-            if (!(std::cin >> first >> second)) {
-                std::cerr << "WRONG GIVEN BOUNDS\n";
-                return EXIT_FAILURE;
+            while (!(std::cin >> first >> second)) {
+                std::cerr << "WRONG GIVEN BOUNDS-> (" << first << ", " << second << "]\n";
+                clearInput();
             }
             std::cout << tree.range_queries(first, second) << " ";
         }
         else {
             std::cerr << "WRONG REQUEST -> " << request << "\n";
-            return EXIT_FAILURE;
+            clearInput();
         }
     }
 

@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <set>
 #include <chrono>
 
 namespace benchmark {
@@ -46,38 +47,44 @@ int getBenchmarkData(VecType& data, std::ifstream& input_data) {
     return EXIT_SUCCESS;
 }
 
-template <typename SetType, typename KeyType>
-size_t set_range_queries(const SetType& set, const KeyType& first, const KeyType& second) {
-        if (first > second)
-            return 0;
+#if 0 // maybe this option would be better?
+template <typename TreeType, typename KeyType>
+size_t set_range_queries(const TreeType& tree, const KeyType& first, const KeyType& second) {
+    if (first > second)
+        return 0;
 
-        auto lower = set.lower_bound(first);
-        auto upper = set.upper_bound(second);
-
-        return std::distance(lower, upper);
-}
-
-template <typename TreeType, typename VecType>
-auto runAvl(TreeType& tree, const VecType& data){
-    volatile size_t dummy = 0;
-    auto result = std::chrono::microseconds::zero();
-    for (const auto& req : data) {
-        auto begin = std::chrono::high_resolution_clock::now();
-        if (req.request == key_request) {
-            tree.insert(req.first);
-        }
-        else if (req.request == query_request) {
-            dummy = tree.range_queries(req.first, req.second);
-        }
-        auto end = std::chrono::high_resolution_clock::now();
-        result += std::chrono::duration_cast<std::chrono::microseconds>(end - begin);
+    if constexpr (std::is_same_v<TreeType, avl::avl_tree<KeyType>>) {
+        return tree.range_queries(first, second);
     }
+    else {
+        auto lower = tree.lower_bound(first);
+        auto upper = tree.upper_bound(second);
+        return std::distance(lower, upper);
+    }
+}
+#endif
 
-    return result;
+template <typename KeyType>
+size_t set_range_queries(const avl::avl_tree<KeyType>& tree, const KeyType& first, const KeyType& second) {
+    if (first > second)
+        return 0;
+
+    return tree.range_queries(first, second);
+
+}
+
+template <typename KeyType>
+size_t set_range_queries(const std::set<KeyType>& tree, const KeyType& first, const KeyType& second) {
+    if (first > second)
+        return 0;
+
+    auto lower = tree.lower_bound(first);
+    auto upper = tree.upper_bound(second);
+    return std::distance(lower, upper);
 }
 
 template <typename TreeType, typename VecType>
-auto runSet(TreeType& tree, const VecType& data){
+auto runTree(TreeType& tree, const VecType& data) {
     volatile size_t dummy = 0;
     auto result = std::chrono::microseconds::zero();
     for (const auto& req : data) {

@@ -32,11 +32,11 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
 
     avl::avl_tree<int> avltree;
-    auto avl_result = benchmark::runAvl<avl::avl_tree<int>, input_vector>(avltree, data);
+    auto avl_result = benchmark::runTree<avl::avl_tree<int>, input_vector>(avltree, data);
     volatile size_t avl_bench = avl_result.count();
 //-------------------------------std::set benchmark------------------------------------//
     std::set<int> settree;
-    auto set_result = benchmark::runSet<std::set<int>, input_vector>(settree, data);
+    auto set_result = benchmark::runTree<std::set<int>, input_vector>(settree, data);
     volatile size_t set_bench = set_result.count();
 
     return EXIT_SUCCESS;
