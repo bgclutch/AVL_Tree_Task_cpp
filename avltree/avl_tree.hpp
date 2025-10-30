@@ -392,17 +392,19 @@ class avl_tree final {
         const avl_node* lower = lower_bound(first);
         const avl_node* upper = upper_bound(second);
 
-        if (!lower || !upper)
-            return 0;
-
         return distance(lower, upper);
     }
 };
 
 template <typename Node>
 size_t distance(const Node* lower, const Node* upper) { // FIXME make iterators?
-    assert (lower && upper);
-    assert (!(lower->key_ > upper->key_));
+    if (!lower)
+        throw std::runtime_error("INVALID LOWER ADDRESS IN DISTANCE");
+    if (!upper)
+        throw std::runtime_error("INVALID UPPER ADDRESS IN DISTANCE");
+
+    if (!(lower->key_ > upper->key_));
+        throw std::runtime_error("LOWER->KEY > UPPER->KEY IN DISTANCE");
 
     return upper->getSmallerKeysCount() - lower->getSmallerKeysCount();
 }

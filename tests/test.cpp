@@ -9,7 +9,7 @@ TEST(AVL_TREE_FUNCTIONS, range_query_1) {
     tree.insert(10);
     tree.insert(1);
 
-    size_t count = avl::distance(tree.lower_bound(0), tree.upper_bound(9));
+    size_t count = tree.range_queries(0, 9);
     ASSERT_EQ(count, 2);
 }
 
@@ -20,8 +20,8 @@ TEST(AVL_TREE_FUNCTIONS, range_query_2) {
     tree.insert(10);
     tree.insert(2);
 
-    size_t count = avl::distance(tree.lower_bound(-2), tree.upper_bound(10));
-    ASSERT_EQ(count, 3);
+    size_t count = tree.range_queries(-2, 9);
+    ASSERT_EQ(count, 2);
 }
 
 TEST(AVL_TREE_FUNCTIONS, range_query_3) {
@@ -30,8 +30,9 @@ TEST(AVL_TREE_FUNCTIONS, range_query_3) {
     tree.insert(-1);
     tree.insert(10);
     tree.insert(2);
+    tree.insert(4);
 
-    size_t count = avl::distance(tree.lower_bound(-2), tree.upper_bound(10));
+    size_t count = tree.range_queries(-2, 5);
     ASSERT_EQ(count, 3);
 }
 
@@ -41,12 +42,12 @@ TEST(AVL_TREE_FUNCTIONS, range_query_4) {
     tree.insert(-5);
     tree.insert(0);
     tree.insert(-1);
-    tree.insert(10);
+    tree.insert(11);
     tree.insert(2);
     tree.insert(8);
 
-    size_t count = avl::distance(tree.lower_bound(-2), tree.upper_bound(10));
-    ASSERT_EQ(count, 5);
+    size_t count = tree.range_queries(-2, 10);
+    ASSERT_EQ(count, 4);
 }
 
 TEST(AVL_TREE_FUNCTIONS, range_query_5) {
@@ -62,7 +63,7 @@ TEST(AVL_TREE_FUNCTIONS, range_query_5) {
     tree.insert(2);
     tree.insert(8);
 
-    size_t count = avl::distance(tree.lower_bound(2), tree.upper_bound(10));
+    size_t count = tree.range_queries(2, 10);
     ASSERT_EQ(count, 4);
 }
 
@@ -81,7 +82,7 @@ TEST(AVL_TREE_FUNCTIONS, copy_ctor) {
 
     avl::avl_tree<int> copy_tree{tree};
 
-    size_t count = avl::distance(copy_tree.lower_bound(2), copy_tree.upper_bound(10));
+    size_t count = copy_tree.range_queries(2, 10);
     ASSERT_EQ(count, 4);
 }
 
@@ -100,7 +101,7 @@ TEST(AVL_TREE_FUNCTIONS, move_ctor) {
 
     avl::avl_tree<int> copy_tree{std::move(tree)};
 
-    size_t count = avl::distance(copy_tree.lower_bound(2), copy_tree.upper_bound(10));
+    size_t count = copy_tree.range_queries(2, 10);
     ASSERT_EQ(count, 4);
 }
 
@@ -120,7 +121,7 @@ TEST(AVL_TREE_FUNCTIONS, copy_assigment) {
     avl::avl_tree<int> copy_tree;
 
     copy_tree = tree;
-    size_t count = avl::distance(copy_tree.lower_bound(2), copy_tree.upper_bound(10));
+    size_t count = copy_tree.range_queries(2, 10);
     ASSERT_EQ(count, 4);
 }
 
@@ -140,7 +141,7 @@ TEST(AVL_TREE_FUNCTIONS, move_assigment) {
     avl::avl_tree<int> copy_tree;
 
     copy_tree = std::move(tree);
-    size_t count = avl::distance(copy_tree.lower_bound(2), copy_tree.upper_bound(10));
+    size_t count = copy_tree.range_queries(2, 10);
     ASSERT_EQ(count, 4);
 }
 
