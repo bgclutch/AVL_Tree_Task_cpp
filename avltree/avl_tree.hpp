@@ -23,15 +23,10 @@ enum class RotationDirection {
     right
 };
 
-/*
-Iterator class/struct
-const ref semantics (const Node&) access w/o changing
-incr/decr, std::next && std::prev already done for classes with ++/--
-*/
 template <typename KeyType>
-class avl_tree {
+class avl_tree final {
  private:
-    class avl_node {
+    class avl_node final {
      public:
         KeyType key_;
         avl_node* parent_;
@@ -62,21 +57,44 @@ class avl_tree {
             return getHeight(left_) - getHeight(right_);
         }
 
-        static size_t getSubtreeSize(const avl_node* node) {
-            return node ? node->subtree_size_ : 0;
+        size_t getSubtreeSize() const {
+            return subtree_size_;
         }
 
         void updateSubtreeSize() {
-            subtree_size_ = 1 + getSubtreeSize(left_) + getSubtreeSize(right_);
+            subtree_size_ = 1;
+            subtree_size_ += left_  ? left_->getSubtreeSize()  : 0;
+            subtree_size_ += right_ ? right_->getSubtreeSize() : 0;
+        }
+
+        size_t getSmallerKeysCount() const {
+            size_t result = 0;
+            const avl_node* current = ascentToRoot();
+            const KeyType& target = this->key_;
+
+            while (current) {
+                if (target <= current->key_) {
+                    current = current->left_;
+                }
+                else {
+                    result += 1;
+                    result += current->left_ ? current->left_->getSubtreeSize() : 0;
+                    current = current->right_;
+                }
+            }
+            return result;
+        }
+
+     private:
+        const avl_node* ascentToRoot() const {
+            const avl_node* node = this;
+
+            while (node->parent_)
+                node = node->parent_;
+
+            return node;
         }
     };
-    #if 0
-    struct Iterator {
-        const avl_node& Node;
-        avl_node& operator++() const {}
-        avl_node& operator--() const {}
-    };
-    #endif
 
     avl_node* root = nullptr;
 
@@ -114,7 +132,7 @@ class avl_tree {
     }
 
  private:
-    static avl_node* deep_copy(const avl_tree& other) {
+    avl_node* deep_copy(const avl_tree& other) {
         if (!other.root)
             return nullptr;
 
@@ -321,7 +339,7 @@ class avl_tree {
     }
 
  public:
-    avl_node* lower_bound(const KeyType& key) const { // FIXME return iterator
+    const avl_node* lower_bound(const KeyType& key) const { // FIXME make iterator?
         auto [node, where_found] = find(key);
 
         if (where_found == find_flag::exists)
@@ -334,7 +352,7 @@ class avl_tree {
         return ascent(node);
     }
 
-    avl_node* upper_bound(const KeyType& key) const { // FIXME return iterator
+    const avl_node* upper_bound(const KeyType& key) const { // FIXME make iterator?
         auto [node, where_found] = find(key);
 
         if (where_found == find_flag::left) {
@@ -367,50 +385,26 @@ class avl_tree {
     }
 
  public:
-    size_t distance(const avl_node* lower, const avl_node* upper) const { // FIXME iterators
-        if (!root) {
-            return 0;
-        }
-        if (!lower) {
-            return 0;
-        }
-        if (!upper) {
-            auto res = avl_node::getSubtreeSize(root) - getSmallerKeysCount(lower);
-            return res;
-        }
-        if (lower->key_ > upper->key_) {
-            return 0;
-        }
-        return getSmallerKeysCount(upper) - getSmallerKeysCount(lower);
-    }
-
- private:
-    size_t getSmallerKeysCount(const avl_node* node) const {
-        size_t result = 0;
-        avl_node* current = root;
-
-        while (current) {
-            if (node->key_ <= current->key_) {
-                current = current->left_;
-            }
-            else {
-                result += 1 + avl_node::getSubtreeSize(current->left_);
-                current = current->right_;
-            }
-        }
-        return result;
-    }
-
- public:
     size_t range_queries(const KeyType& first, const KeyType& second) const {
         if (first > second)
             return 0;
 
-        avl_node* lower = lower_bound(first);
-        avl_node* upper = upper_bound(second);
+        const avl_node* lower = lower_bound(first);
+        const avl_node* upper = upper_bound(second);
+
+        if (!lower || !upper)
+            return 0;
 
         return distance(lower, upper);
     }
 };
+
+template <typename Node>
+size_t distance(const Node* lower, const Node* upper) { // FIXME make iterators?
+    assert (lower && upper);
+    assert (!(lower->key_ > upper->key_));
+
+    return upper->getSmallerKeysCount() - lower->getSmallerKeysCount();
+}
 
 } // namespace avl

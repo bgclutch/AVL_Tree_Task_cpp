@@ -2,10 +2,7 @@
 #include <iostream>
 #include <limits>
 
-void clearInput() {
-    std::cin.clear();
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-}
+void clearInput();
 
 int main() {
     avl::avl_tree<int> tree;
@@ -38,4 +35,9 @@ int main() {
     std::cout << std::endl;
 
     return EXIT_SUCCESS;
+}
+
+void clearInput() {
+    std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
