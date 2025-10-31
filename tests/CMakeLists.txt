@@ -1,7 +1,7 @@
 find_package(GTest REQUIRED)
 
 add_executable(tests
-    test.cpp
+    UnitTests/test.cpp
 )
 
 target_include_directories(tests PRIVATE

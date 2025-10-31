@@ -30,20 +30,20 @@ class avl_tree final {
      public:
         KeyType key_;
         avl_node* parent_;
-        avl_node* left_;
-        avl_node* right_;
         size_t height_;
         size_t subtree_size_;
+        avl_node* left_;
+        avl_node* right_;
 
      public:
-        avl_node(KeyType key, avl_node* parent, avl_node* left = nullptr
-                , avl_node* right = nullptr, size_t height = 1, size_t subtree_size = 1):
+        avl_node(KeyType key, avl_node* parent, size_t height = 1, size_t subtree_size = 1
+                            , avl_node* left = nullptr, avl_node* right = nullptr):
         key_(key),
         parent_(parent),
-        left_(left),
-        right_(right),
         height_(height),
-        subtree_size_(subtree_size) {};
+        subtree_size_(subtree_size),
+        left_(left),
+        right_(right) {};
 
         void updateNodeHeight() {
             height_ = 1 + std::max(getHeight(left_), getHeight(right_));
@@ -139,8 +139,8 @@ class avl_tree final {
         std::stack<std::pair<const avl_node*, avl_node*>> stack;
         avl_node* node = other.root;
 
-        avl_node* newRoot = new avl_node(node->key_, node->parent_, node->left_, node->right_
-                                       , node->height_, node->subtree_size_);
+        avl_node* newRoot = new avl_node(node->key_, node->parent_, node->height_, node->subtree_size_
+                                       , node->left_, node->right_);
 
         stack.push({node, newRoot});
 
@@ -149,17 +149,17 @@ class avl_tree final {
             stack.pop();
 
             if (old_node->left_) {
-                new_node->left_ = new avl_node(old_node->left_->key_, new_node, old_node->left_->left_
-                                             , old_node->left_->right_, old_node->left_->height_
-                                             , old_node->left_->subtree_size_);
+                new_node->left_ = new avl_node(old_node->left_->key_, new_node
+                                             , old_node->left_->height_, old_node->left_->subtree_size_
+                                             , old_node->left_->left_, old_node->left_->right_);
 
                 stack.push({old_node->left_, new_node->left_});
             }
 
             if (old_node->right_) {
-                new_node->right_ = new avl_node(old_node->right_->key_, new_node, old_node->right_->left_
-                                              , old_node->right_->right_, old_node->right_->height_
-                                              , old_node->right_->subtree_size_);
+                new_node->right_ = new avl_node(old_node->right_->key_, new_node
+                                              , old_node->right_->height_, old_node->right_->subtree_size_
+                                              , old_node->right_->left_, old_node->right_->right_);
 
                 stack.push({old_node->right_, new_node->right_});
             }
@@ -373,6 +373,9 @@ class avl_tree final {
 
  private:
     avl_node* ascent(avl_node* node) const {
+        if (!node)
+            return node;
+
         avl_node* parent = node->parent_;
         avl_node* curNode = node;
 
@@ -392,20 +395,19 @@ class avl_tree final {
         const avl_node* lower = lower_bound(first);
         const avl_node* upper = upper_bound(second);
 
+        if (!lower)
+            return 0;
+        if (!upper)
+            return root->getSubtreeSize() - lower->getSmallerKeysCount();
+
         return distance(lower, upper);
     }
 };
 
 template <typename Node>
 size_t distance(const Node* lower, const Node* upper) { // FIXME make iterators?
-    if (!lower)
-        throw std::runtime_error("INVALID LOWER ADDRESS IN DISTANCE");
-    if (!upper)
-        throw std::runtime_error("INVALID UPPER ADDRESS IN DISTANCE");
-
-    if (!(lower->key_ > upper->key_));
-        throw std::runtime_error("LOWER->KEY > UPPER->KEY IN DISTANCE");
-
+    assert (lower);
+    assert (upper);
     return upper->getSmallerKeysCount() - lower->getSmallerKeysCount();
 }
 
