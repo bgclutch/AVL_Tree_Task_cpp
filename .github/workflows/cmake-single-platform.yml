@@ -28,7 +28,7 @@ jobs:
         sudo cp lib/*.a /usr/lib
 
     - name: Configure CMake
-      run: cmake -DENABLE_ASAN=ON -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      run: cmake -B ${{github.workspace}}/build -DENABLE_ASAN=ON -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DENABLE_BENCHMARK=ON
 
     - name: Build all targets
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel
