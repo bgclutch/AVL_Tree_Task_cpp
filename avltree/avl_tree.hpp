@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <cassert>
 #include <memory>
-#include <iostream>
 
 namespace avl {
 
@@ -53,7 +52,7 @@ class avl_tree final {
             height_ = 1 + std::max(left, right);
         }
 
-        size_t getHeight() const {
+        size_t getHeight() const noexcept {
             return height_;
         }
 
