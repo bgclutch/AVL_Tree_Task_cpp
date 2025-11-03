@@ -14,5 +14,4 @@ target_link_libraries(tests PRIVATE
     GTest::gtest_main
 )
 
-enable_testing()
 add_test(NAME unit_test COMMAND tests)
