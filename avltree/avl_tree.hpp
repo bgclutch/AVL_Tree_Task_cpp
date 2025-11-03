@@ -3,6 +3,8 @@
 #include <stack>
 #include <algorithm>
 #include <cassert>
+#include <memory>
+#include <iostream>
 
 namespace avl {
 
@@ -29,64 +31,81 @@ class avl_tree final {
     class avl_node final {
      public:
         KeyType key_;
-        avl_node* parent_;
         size_t height_;
         size_t subtree_size_;
-        avl_node* left_;
-        avl_node* right_;
+        avl_node* parent_;
+        std::unique_ptr<avl_node> left_;
+        std::unique_ptr<avl_node> right_;
 
      public:
-        avl_node(KeyType key, avl_node* parent, size_t height = 1, size_t subtree_size = 1
-                            , avl_node* left = nullptr, avl_node* right = nullptr):
+        avl_node(KeyType key, size_t height = 1, size_t subtree_size = 1,
+                 avl_node* parent = nullptr, std::unique_ptr<avl_node> left = nullptr,
+                 std::unique_ptr<avl_node> right = nullptr):
         key_(key),
-        parent_(parent),
         height_(height),
         subtree_size_(subtree_size),
-        left_(left),
-        right_(right) {};
+        parent_(parent),
+        left_(std::move(left)),
+        right_(std::move(right)) {};
 
         void updateNodeHeight() {
-            height_ = 1 + std::max(getHeight(left_), getHeight(right_));
+            auto [left, right] = getChildsHeight();
+            height_ = 1 + std::max(left, right);
         }
 
-        static size_t getHeight(const avl_node* node) {
-            return node ? node->height_ : 0;
+        size_t getHeight() const {
+            return height_;
         }
 
+     private:
+        auto getChildsHeight() const {
+            size_t left = 0;
+            if (left_)
+                left = left_->getHeight();
+
+            size_t right = 0;
+            if (right_)
+                right = right_->getHeight();
+
+            return std::pair(left, right);
+        }
+
+     public:
         int getBalanceFactor() const {
-            return getHeight(left_) - getHeight(right_);
+            auto [left, right] = getChildsHeight();
+            return left - right;
         }
 
-        size_t getSubtreeSize() const {
+        size_t getSubtreeSize() const noexcept {
             return subtree_size_;
         }
 
-        void updateSubtreeSize() {
+        void updateSubtreeSize() noexcept {
             subtree_size_ = 1;
-            subtree_size_ += left_  ? left_->getSubtreeSize()  : 0;
-            subtree_size_ += right_ ? right_->getSubtreeSize() : 0;
+            subtree_size_ += left_.get()  ? left_->getSubtreeSize() : 0;
+            subtree_size_ += right_.get() ? right_->getSubtreeSize() : 0;
         }
 
         size_t getSmallerKeysCount() const {
             size_t result = 0;
             const avl_node* current = ascentToRoot();
-            const KeyType& target = this->key_;
+            const KeyType& target = key_;
 
             while (current) {
                 if (target <= current->key_) {
-                    current = current->left_;
+                    current = current->left_.get();
                 }
                 else {
                     result += 1;
-                    result += current->left_ ? current->left_->getSubtreeSize() : 0;
-                    current = current->right_;
+                    result += current->left_.get() ? current->left_->getSubtreeSize() : 0;
+                    current = current->right_.get();
                 }
             }
             return result;
         }
 
      private:
-        const avl_node* ascentToRoot() const {
+        const avl_node* ascentToRoot() const noexcept {
             const avl_node* node = this;
 
             while (node->parent_)
@@ -96,23 +115,20 @@ class avl_tree final {
         }
     };
 
-    avl_node* root = nullptr;
-
     using rotate_direction = avl::RotationDirection;
     using find_flag = avl::FindFlags;
     using find_res  = std::pair<avl_node*, find_flag>;
 
+    std::unique_ptr<avl_node> root = nullptr;
+
  public:
     avl_tree() = default; // constructor
-    ~avl_tree() {         // destructor
-        deleteTree();
-    }
 
     avl_tree(const avl_tree<KeyType>& other) { // copy constructor
         root = deep_copy(other);
     }
 
-    avl_tree(avl_tree<KeyType>&& other) noexcept : root{std::exchange(other.root, nullptr)} {} // move constructor
+    avl_tree(avl_tree<KeyType>&& other) noexcept : root{std::move(other.root)} {} // move constructor
 
     avl_tree& operator=(const avl_tree<KeyType>& other) { // copy assignment
         if (this == &other)
@@ -132,36 +148,34 @@ class avl_tree final {
     }
 
  private:
-    avl_node* deep_copy(const avl_tree& other) {
+
+    std::unique_ptr<avl_node> deep_copy(const avl_tree& other) {
         if (!other.root)
             return nullptr;
 
         std::stack<std::pair<const avl_node*, avl_node*>> stack;
-        avl_node* node = other.root;
+        const avl_node* node = other.root.get();
 
-        avl_node* newRoot = new avl_node(node->key_, node->parent_, node->height_, node->subtree_size_
-                                       , node->left_, node->right_);
+        auto newRoot = std::make_unique<avl_node>(node->key_, node->height_, node->subtree_size_, node->parent_);
 
-        stack.push({node, newRoot});
+        stack.push({node, newRoot.get()});
 
         while (!stack.empty()) {
             auto [old_node, new_node] = stack.top();
             stack.pop();
 
             if (old_node->left_) {
-                new_node->left_ = new avl_node(old_node->left_->key_, new_node
-                                             , old_node->left_->height_, old_node->left_->subtree_size_
-                                             , old_node->left_->left_, old_node->left_->right_);
+                new_node->left_ = std::make_unique<avl_node>(old_node->left_->key_, old_node->left_->height_,
+                                                             old_node->left_->subtree_size_, new_node);
 
-                stack.push({old_node->left_, new_node->left_});
+                stack.push({old_node->left_.get(), new_node->left_.get()});
             }
 
             if (old_node->right_) {
-                new_node->right_ = new avl_node(old_node->right_->key_, new_node
-                                              , old_node->right_->height_, old_node->right_->subtree_size_
-                                              , old_node->right_->left_, old_node->right_->right_);
+                new_node->right_ = std::make_unique<avl_node>(old_node->right_->key_, old_node->right_->height_,
+                                                              old_node->right_->subtree_size_, new_node);
 
-                stack.push({old_node->right_, new_node->right_});
+                stack.push({old_node->right_.get(), new_node->right_.get()});
             }
         }
 
@@ -171,27 +185,27 @@ class avl_tree final {
  public:
     void insert(const KeyType& key_to_insert) {
         if (!root) {
-            root = new avl_node(key_to_insert, nullptr);
+            root = std::make_unique<avl_node>(key_to_insert);
             return;
         }
 
         auto [parent, where_to_insert] = find(key_to_insert);
-
         if (where_to_insert == find_flag::exists)
             return;
 
-        avl_node* new_node = new avl_node(key_to_insert, parent);
+        auto new_node = std::make_unique<avl_node>(key_to_insert);
+        new_node->parent_ = parent;
 
         if (where_to_insert == find_flag::right)
-            parent->right_ = new_node;
-        else
-            parent->left_ = new_node;
+            parent->right_ = std::move(new_node);
+        else if (where_to_insert == find_flag::left)
+            parent->left_ = std::move(new_node);
 
-        updateHeights(new_node);
+        updateHeights(parent);
     }
 
     find_res find(const KeyType& key_to_find) const {
-        avl_node* current = root;
+        avl_node* current = root.get();
         avl_node* parent = nullptr;
         find_flag where_found = find_flag::exists;
 
@@ -202,11 +216,11 @@ class avl_tree final {
             parent = current;
 
             if (key_to_find > current->key_) {
-                current = current->right_;
+                current = current->right_.get();
                 where_found = find_flag::right;
             }
             else {
-                current = current->left_;
+                current = current->left_.get();
                 where_found = find_flag::left;
             }
         }
@@ -215,64 +229,23 @@ class avl_tree final {
     }
 
  private:
-    void deleteTree() {
-        if (!root)
-            return;
+    std::unique_ptr<avl_node> rotateLeft(std::unique_ptr<avl_node> disbalancedNode) {
+        std::unique_ptr<avl_node> newRoot;
+        std::unique_ptr<avl_node> newSubtree;
 
-        std::stack<avl_node*> deletions;
-        avl_node* current = root;
-        deletions.push(current);
+        newRoot = std::move(disbalancedNode->right_);
+        newSubtree = std::move(newRoot->left_);
 
-        while (!deletions.empty()) {
-            current = deletions.top();
-
-            if (!current->left_ && !current->right_) {
-                deletions.pop();
-                avl_node* parent = current->parent_;
-
-                if (parent) {
-                    if (current == parent->left_)
-                        parent->left_ = nullptr;
-                    else
-                        parent->right_ = nullptr;
-                }
-                delete current;
-                continue;
-            }
-
-            if (current->right_)
-                deletions.push(current->right_);
-
-            if (current->left_)
-                deletions.push(current->left_);
-        }
-    }
-
-    avl_node* rotation(avl_node* disbalancedNode, const rotate_direction direction) {
-        avl_node* newRoot;
-        avl_node* newSubtree;
-
-        if (direction == rotate_direction::left) {
-            newRoot = disbalancedNode->right_;
-            newSubtree = newRoot->left_;
-            newRoot->left_ = disbalancedNode;
-            disbalancedNode->right_ = newSubtree;
-        }
-        else {
-            newRoot = disbalancedNode->left_;
-            newSubtree = newRoot->right_;
-            newRoot->right_ = disbalancedNode;
-            disbalancedNode->left_ = newSubtree;
-        }
-
-        newRoot->parent_ = disbalancedNode->parent_;
-        disbalancedNode->parent_ = newRoot;
+        newRoot->left_ = std::move(disbalancedNode);
+        newRoot->parent_ = newRoot->left_->parent_;
+        newRoot->left_->parent_ = newRoot.get();
 
         if (newSubtree)
-            newSubtree->parent_ = disbalancedNode;
+            newSubtree->parent_ = newRoot->left_.get();
+        newRoot->left_->right_ = std::move(newSubtree);
 
-        disbalancedNode->updateNodeHeight();
-        disbalancedNode->updateSubtreeSize();
+        newRoot->left_->updateNodeHeight();
+        newRoot->left_->updateSubtreeSize();
 
         newRoot->updateNodeHeight();
         newRoot->updateSubtreeSize();
@@ -280,66 +253,86 @@ class avl_tree final {
         return newRoot;
     }
 
-    avl_node* rebalance(avl_node* disbalancedNode) {
-        int balanceFactor = disbalancedNode->getBalanceFactor();
-        if (MIN_BALANCE <= balanceFactor && balanceFactor <= MAX_BALANCE)
-            return disbalancedNode;
+    std::unique_ptr<avl_node> rotateRight(std::unique_ptr<avl_node> disbalancedNode) {
+        std::unique_ptr<avl_node> newRoot;
+        std::unique_ptr<avl_node> newSubtree;
 
-        avl_node* newRoot = nullptr;
+        newRoot = std::move(disbalancedNode->left_);
+        newSubtree = std::move(newRoot->right_);
 
-        if (balanceFactor > MAX_BALANCE) { // left disbalancedNode
-            avl_node* leftDisbChild = disbalancedNode->left_;
+        newRoot->right_ = std::move(disbalancedNode);
+        newRoot->parent_ = newRoot->right_->parent_;
+        newRoot->right_->parent_ = newRoot.get();
 
-            if (leftDisbChild->getBalanceFactor() < 0)
-               disbalancedNode->left_ = rotation(leftDisbChild, rotate_direction::left);
+        if (newSubtree)
+            newSubtree->parent_ = newRoot->right_.get();
+        newRoot->right_->left_ = std::move(newSubtree);
 
-            newRoot = rotation(disbalancedNode, rotate_direction::right);
-        }
-        else {                            // right disbalancedNode
-            avl_node* rightDisbChild = disbalancedNode->right_;
+        newRoot->right_->updateNodeHeight();
+        newRoot->right_->updateSubtreeSize();
 
-            if (rightDisbChild->getBalanceFactor() > 0)
-                disbalancedNode->right_ = rotation(rightDisbChild, rotate_direction::right);
-
-            newRoot = rotation(disbalancedNode, rotate_direction::left);
-        }
-
-        assert(newRoot);
-        setChildDependency(newRoot, disbalancedNode);
+        newRoot->updateNodeHeight();
+        newRoot->updateSubtreeSize();
 
         return newRoot;
     }
 
-    void setChildDependency(avl_node* newRoot, const avl_node* disbalancedNode) {
-        avl_node* parent = newRoot->parent_;
-        if (!parent) {
-            root = newRoot;
-            return;
+    std::unique_ptr<avl_node> rebalance(std::unique_ptr<avl_node> disbalancedNode) {
+        int balanceFactor = disbalancedNode->getBalanceFactor();
+        if (MIN_BALANCE <= balanceFactor && balanceFactor <= MAX_BALANCE)
+            return disbalancedNode;
+
+        std::unique_ptr<avl_node> newRoot = nullptr;
+
+        if (balanceFactor > MAX_BALANCE) { // left disbalancedNode
+            if (disbalancedNode->left_->getBalanceFactor() < 0) {
+                disbalancedNode->left_ = rotateLeft(std::move(disbalancedNode->left_));
+                disbalancedNode->left_->parent_ = disbalancedNode.get();
+            }
+
+            newRoot = rotateRight(std::move(disbalancedNode));
+        }
+        else {                             // right disbalancedNode
+            if (disbalancedNode->right_->getBalanceFactor() > 0) {
+                disbalancedNode->right_ = rotateRight(std::move(disbalancedNode->right_));
+                disbalancedNode->right_->parent_ = disbalancedNode.get();
+            }
+            newRoot = rotateLeft(std::move(disbalancedNode));
         }
 
-        if (parent->left_ == disbalancedNode)
-            parent->left_ = newRoot;
-        else
-            parent->right_ = newRoot;
+        return newRoot;
     }
 
     void updateHeights(avl_node* node) {
         while (node) {
             node->updateNodeHeight();
             node->updateSubtreeSize();
+
             int balanceFactor = node->getBalanceFactor();
 
-            if (MIN_BALANCE > balanceFactor || balanceFactor > MAX_BALANCE) {
-                avl_node* disbalancedNode = node;
-                node = rebalance(disbalancedNode);
+            if (balanceFactor < MIN_BALANCE || balanceFactor > MAX_BALANCE) {
+                avl_node* parent = node->parent_;
+
+                if (parent) {
+                    if (parent->left_.get() == node)
+                        parent->left_ = rebalance(std::move(parent->left_));
+                    else
+                        parent->right_ = rebalance(std::move(parent->right_));
+                }
+                else {
+                    root = rebalance(std::move(root));
+                }
+
+                node = parent;
             }
-            else
+            else {
                 node = node->parent_;
+            }
         }
     }
 
  public:
-    const avl_node* lower_bound(const KeyType& key) const { // FIXME make iterator?
+    const avl_node* lower_bound(const KeyType& key) const {
         auto [node, where_found] = find(key);
 
         if (where_found == find_flag::exists)
@@ -352,7 +345,7 @@ class avl_tree final {
         return ascent(node);
     }
 
-    const avl_node* upper_bound(const KeyType& key) const { // FIXME make iterator?
+    const avl_node* upper_bound(const KeyType& key) const {
         auto [node, where_found] = find(key);
 
         if (where_found == find_flag::left) {
@@ -361,9 +354,9 @@ class avl_tree final {
 
         if (where_found == find_flag::exists) {
             if (node && node->right_) {
-                node = node->right_;
+                node = node->right_.get();
                 while (node && node->left_)
-                    node = node->left_;
+                    node = node->left_.get();
                 return node;
             }
         }
@@ -379,7 +372,7 @@ class avl_tree final {
         avl_node* parent = node->parent_;
         avl_node* curNode = node;
 
-        while (parent && parent->right_ == curNode) {
+        while (parent && parent->right_.get() == curNode) {
             curNode = parent;
             parent = parent->parent_;
         }
@@ -405,7 +398,7 @@ class avl_tree final {
 };
 
 template <typename Node>
-size_t distance(const Node* lower, const Node* upper) { // FIXME make iterators?
+size_t distance(const Node* lower, const Node* upper) {
     assert (lower);
     assert (upper);
     return upper->getSmallerKeysCount() - lower->getSmallerKeysCount();

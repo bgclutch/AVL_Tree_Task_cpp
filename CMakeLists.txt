@@ -31,6 +31,8 @@ $<$<CONFIG:Debug>:
 )
 
 if(ENABLE_ASAN)
-    target_compile_options(avltree PRIVATE $<$<CONFIG:Debug>: -fsanitize=address>)
-    target_link_options(avltree PRIVATE $<$<CONFIG:Debug>: -fsanitize=address>)
+    foreach(target avltree tests)
+        target_compile_options(${target} PRIVATE $<$<CONFIG:Debug>: -fsanitize=address>)
+        target_link_options(${target} PRIVATE $<$<CONFIG:Debug>: -fsanitize=address>)
+    endforeach()
 endif()
