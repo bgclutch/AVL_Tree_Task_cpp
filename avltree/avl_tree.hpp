@@ -143,7 +143,7 @@ class avl_tree final {
         explicit avl_iterator(avl_node* node = nullptr) : node_(node) {}
 
         bool isNull() {
-            return node_ == nullptr;
+            return !node_;
         }
 
         avl_iterator& operator++() {
@@ -192,7 +192,7 @@ class avl_tree final {
         }
 
         bool operator!=(const avl_iterator& other) const noexcept {
-            return node_ != other.node_;
+            return !(*this == other);
         }
 
         const avl_node& operator*() const noexcept {
