@@ -36,7 +36,3 @@ jobs:
     - name: Run unit tests
       working-directory: ${{github.workspace}}/build
       run: ctest --output-on-failure -C ${{env.BUILD_TYPE}}
-
-    - name: Run benchmark
-      working-directory: ${{github.workspace}}/build/benchmark
-      run: ./benchmark ${{github.workspace}}/benchmark/default_benchmark.in
