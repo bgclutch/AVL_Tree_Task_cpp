@@ -125,25 +125,22 @@ class avl_tree final {
         return node;
     }
 
-    static avl_node* findMax(avl_node* node) {
-        if (!node)
-            return nullptr;
-
-        while (node->right_)
-            node = node->right_.get();
-
-        return node;
-    }
-
  public:
     class avl_iterator final {
-     private:
-        avl_node* node_;
      public:
+        using iterator_category = std::forward_iterator_tag;
+        using value_type        = avl_node;
+        using difference_type   = std::ptrdiff_t;
+        using reference         = const avl_node&;
+        using pointer           = const avl_node* const&;
+
+    private:
+        avl_node* node_;
+    public:
         explicit avl_iterator(avl_node* node = nullptr) : node_(node) {}
 
-        bool isNull() {
-            return !node_;
+        explicit operator bool() const noexcept {
+            return node_ != nullptr;
         }
 
         avl_iterator& operator++() {
@@ -166,27 +163,6 @@ class avl_tree final {
             return *this;
         }
 
-        avl_iterator& operator--() {
-            if (!node_) {
-                return *this;
-            }
-
-            if (node_->left_) {
-                node_ = node_->left_.get();
-                node_ = findMax(node_);
-            }
-            else {
-                auto parent = node_->parent_;
-                while (parent && node_ == parent->left_.get()) {
-                    node_  = parent;
-                    parent = parent->parent_;
-                }
-                node_ = parent;
-            }
-
-            return *this;
-        }
-
         bool operator==(const avl_iterator& other) const noexcept {
             return node_ == other.node_;
         }
@@ -198,65 +174,69 @@ class avl_tree final {
         const avl_node& operator*() const noexcept {
             return *node_;
         }
+
+        const avl_node* const& operator->() const noexcept {
+            return node_;
+        }
     };
 
-    using rotate_direction = avl::RotationDirection;
-    using find_flag = avl::FindFlags;
-    using find_res  = std::pair<avl_node*, find_flag>;
-    using iterator  = avl_iterator;
+        using rotate_direction = avl::RotationDirection;
+        using find_flag = avl::FindFlags;
+        using find_res  = std::pair<avl_node*, find_flag>;
+        using iterator  = avl_iterator;
 
-    std::unique_ptr<avl_node> root = nullptr;
+        std::unique_ptr<avl_node> root = nullptr;
 
- public:
-    avl_tree() = default; // constructor
+    public:
+        avl_tree() = default; // constructor
 
-    avl_tree(const avl_tree<KeyType>& other) { // copy constructor
-        root = deep_copy(other);
-    }
+        avl_tree(const avl_tree<KeyType>& other) { // copy constructor
+            root = deep_copy(other);
+        }
 
-    avl_tree(avl_tree<KeyType>&& other) noexcept : root{std::move(other.root)} {} // move constructor
+        avl_tree(avl_tree<KeyType>&& other) noexcept : root{std::move(other.root)} {} // move constructor
 
-    avl_tree& operator=(const avl_tree<KeyType>& other) { // copy assignment
-        auto tmp = deep_copy(other);
-        std::swap(root, tmp);
-        return *this;
-    }
-
-    avl_tree& operator=(avl_tree<KeyType>&& other) noexcept { // move assignment
-        if (this == &other)
+        avl_tree& operator=(const avl_tree<KeyType>& other) { // copy assignment
+            auto tmp = deep_copy(other);
+            std::swap(root, tmp);
             return *this;
+        }
 
-        std::swap(root, other.root);
-        return *this;
-    }
+        avl_tree& operator=(avl_tree<KeyType>&& other) noexcept { // move assignment
+            if (this == &other)
+                return *this;
 
-    iterator begin() noexcept {
-        avl_iterator iterator(findMin(root.get()));
-        return iterator;
-    }
+            std::swap(root, other.root);
+            return *this;
+        }
 
-    iterator end() noexcept {
-        avl_iterator iterator(nullptr);
-        return iterator;
-    }
+        iterator begin() noexcept {
+            avl_iterator iterator(findMin(root.get()));
+            return iterator;
+        }
 
-    iterator begin() const noexcept {
-        avl_iterator iterator(findMin(root.get()));
-        return iterator;
-    }
+        iterator end() noexcept {
+            avl_iterator iterator(nullptr);
+            return iterator;
+        }
 
-    iterator end() const noexcept {
-        avl_iterator iterator(nullptr);
-        return iterator;
-    }
+        iterator begin() const noexcept {
+            avl_iterator iterator(findMin(root.get()));
+            return iterator;
+        }
 
-    iterator cbegin() const noexcept {
-        return this->begin();
-    }
+        iterator end() const noexcept {
+            avl_iterator iterator(nullptr);
+            return iterator;
+        }
 
-    iterator cend() const noexcept {
-        return this->end();
-    }
+        iterator cbegin() const noexcept {
+            return this->begin();
+        }
+
+        iterator cend() const noexcept {
+            return this->end();
+        }
 
  private:
     std::unique_ptr<avl_node> deep_copy(const avl_tree& other) {
@@ -500,10 +480,10 @@ class avl_tree final {
         iterator lower = lower_bound(first);
         iterator upper = upper_bound(second);
 
-        if (lower.isNull())
+        if (!lower)
             return 0;
-        if (upper.isNull())
-            return root->getSubtreeSize() - (*lower).getSmallerKeysCount();
+        if (!upper)
+            return root->getSubtreeSize() - lower->getSmallerKeysCount();
 
         return distance(lower, upper);
     }
@@ -511,10 +491,10 @@ class avl_tree final {
 
 template <typename Iterator>
 size_t distance(Iterator lower, Iterator upper) {
-    assert (!lower.isNull());
-    assert (!upper.isNull());
+    assert (lower);
+    assert (upper);
 
-    return (*upper).getSmallerKeysCount() - (*lower).getSmallerKeysCount();
+    return upper->getSmallerKeysCount() - lower->getSmallerKeysCount();
 }
 
 } // namespace avl

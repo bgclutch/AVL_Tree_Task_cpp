@@ -153,7 +153,7 @@ TEST(AVL_ITERATOR, begin) {
     tree.insert(10);
     tree.insert(-100);
 
-    ASSERT_EQ((*tree.begin()).key_, -100);
+    ASSERT_EQ(tree.begin()->key_, -100);
 }
 
 TEST(AVL_ITERATOR, end) {
@@ -164,7 +164,7 @@ TEST(AVL_ITERATOR, end) {
     tree.insert(10);
     tree.insert(-100);
 
-    ASSERT_TRUE(tree.end().isNull());
+    ASSERT_TRUE(!tree.end());
 }
 
 TEST(AVL_ITERATOR, cbegin) {
@@ -175,7 +175,7 @@ TEST(AVL_ITERATOR, cbegin) {
     tree.insert(10);
     tree.insert(-100);
 
-    ASSERT_EQ((*tree.cbegin()).key_, -100);
+    ASSERT_EQ(tree.cbegin()->key_, -100);
 }
 
 TEST(AVL_ITERATOR, cend) {
@@ -186,7 +186,7 @@ TEST(AVL_ITERATOR, cend) {
     tree.insert(10);
     tree.insert(-100);
 
-    ASSERT_TRUE(tree.cend().isNull());
+    ASSERT_TRUE(!tree.cend());
 }
 
 TEST(AVL_ITERATOR, isNull_method_first) {
@@ -197,7 +197,7 @@ TEST(AVL_ITERATOR, isNull_method_first) {
     tree.insert(10);
     tree.insert(-100);
 
-    ASSERT_EQ(tree.end().isNull(), true);
+    ASSERT_EQ(!tree.end(), true);
 }
 
 TEST(AVL_ITERATOR, isNull_method_second) {
@@ -208,7 +208,7 @@ TEST(AVL_ITERATOR, isNull_method_second) {
     tree.insert(10);
     tree.insert(-100);
 
-    ASSERT_EQ(tree.begin().isNull(), false);
+    ASSERT_EQ(!tree.begin(), false);
 }
 
 TEST(AVL_ITERATOR, operator_not_equal) {
@@ -252,33 +252,7 @@ TEST(AVL_ITERATOR, operator_plus_plus_second) {
     ++tree_it;
     ++tree_it;
 
-    ASSERT_EQ((*tree_it).key_, 19);
-}
-
-TEST(AVL_ITERATOR, operator_minus_minus_first) {
-    avl::avl_tree<int> tree;
-    tree.insert(10);
-    tree.insert(20);
-    tree.insert(30);
-
-    auto tree_it = tree.end();
-    --tree_it;
-
-    ASSERT_TRUE(tree_it.isNull());
-}
-
-TEST(AVL_ITERATOR, operator_minus_minus_second) {
-    avl::avl_tree<int> tree;
-    tree.insert(10);
-    tree.insert(20);
-    tree.insert(30);
-    tree.insert(11);
-    tree.insert(19);
-
-    auto tree_it = tree.begin();
-    for (int i = 0; i != 4 ; ++tree_it, ++i) {}
-
-    ASSERT_EQ((*tree_it).key_, 30);
+    ASSERT_EQ(tree_it->key_, 19);
 }
 
 TEST(AVL_ITERATOR, operator_dereference) {
@@ -287,7 +261,7 @@ TEST(AVL_ITERATOR, operator_dereference) {
     tree.insert(20);
     tree.insert(30);
 
-    ASSERT_EQ((*tree.begin()).key_, 10);
+    ASSERT_EQ(tree.begin()->key_, 10);
 }
 
 
