@@ -52,7 +52,7 @@ class avl_tree final {
             height_ = 1 + std::max(left, right);
         }
 
-        size_t getHeight() const noexcept {
+        size_t getHeight() const {
             return height_;
         }
 
@@ -75,7 +75,7 @@ class avl_tree final {
             return left - right;
         }
 
-        size_t getSubtreeSize() const noexcept {
+        size_t getSubtreeSize() const {
             return subtree_size_;
         }
 
